@@ -1,0 +1,35 @@
+{
+  "name": "bnf_mt",
+  "version": "0.0.1",
+  "description": "Human Made Spoken Language with BNF (人造交談語言的檢驗翻譯系統)",
+  "main": "index.js",
+  "dependencies": {
+    "chinese_convert": "^1.0.8",
+    "mdo": "^1.0.4",
+    "pinyin.js": "^2.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^3.1.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "bin": {},
+  "keywords": [
+    "chinese",
+    "convert",
+    "zh",
+    "cn",
+    "tw"
+  ],
+  "homepage": "https://github.com/ccckmit/bnf_mt",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/ccckmit/bnf_mt.git"
+  },
+  "author": {
+    "name": "Chung-Chen Chen",
+    "email": "ccckmit@gmail.com"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,10 @@
+var fs = require('fs')
+var mdo = require('./mdo')
+var kbMdo = fs.readFileSync('kb.mdo').toString()
+// console.log('kbMdo=%s', kbMdo)
+var kb = mdo.parseTable(kbMdo)
+// console.log('kb=%j', kb)
+var cnKb = mdo.index(kb, 'cn')
+var cn = '母亲'
+// console.log('cnKb=%j', cnKb)
+console.log('kb[%s]=%j', cn, cnKb[cn])
