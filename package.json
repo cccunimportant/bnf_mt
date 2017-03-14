@@ -1,6 +1,6 @@
 {
   "name": "bnf_mt",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Human Made Spoken Language with BNF (人造交談語言的檢驗翻譯系統)",
   "main": "index.js",
   "dependencies": {
