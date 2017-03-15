@@ -13,19 +13,9 @@ var wi = 0
 var words = []
 
 function isTag (tag) {
-  var word = kb.get(words[wi])
+  var word = words[wi]
   if (typeof word === 'undefined') return false
   return (tag === word.tag)
-}
-
-function c2e (w) {
-  var word = kb.get(w)
-  if (typeof word === 'undefined' || word.en === '_') {
-    var cn = cc.tw2cn(w)
-    return '_' + pinyinJs(cn).toString().replace(',', '_')
-  } else {
-    return word.en
-  }
 }
 
 var print = function (s) { process.stderr.write(s) }
@@ -33,11 +23,11 @@ var print = function (s) { process.stderr.write(s) }
 function next (tag) {
   var w = words[wi]
   if (isTag(tag)) {
-    print(w + ':' + tag + ' ')
+    print(w.cn + ':' + tag + ' ')
     wi++
     return w
   } else {
-    print(w + ':' + tag + '≠' + kb.get(w) + ' ')
+    print(w.cn + ':' + tag + '≠' + w.tag + ' ')
     throw Error('Error !')
   }
 }
@@ -87,20 +77,45 @@ function NP () {
   }
 }
 
+var exps = [
+  /^\s([\u4E00-\u9FFF]{1,8}):([a-z])\s/i,
+  /^\s(\w{1,20}):([a-z])\s/i,
+  /^[\u4E00-\u9FFF]{4}/,
+  /^[\u4E00-\u9FFF]{3}/,
+  /^[\u4E00-\u9FFF]{2}/,
+  /^./]
+
 function clex (text) {
+  var m
   var words = []
+  var tokens = []
   for (var i = 0; i < text.length;) {
-    for (var len = 4; len >= 1; len--) {
-      var c = text.substr(i, len)
-      var word = kb.get(c)
-      if ((len === 1 && c !== ' ') || typeof word !== 'undefined') {
-        words.push(word.cn)
-        break
+    for (var ri = 0; ri < exps.length; ri++) {
+      var word = null
+      m = exps[ri].exec(text.substr(i, 12))
+      if (m) {
+        if (ri === 0) { // ex: 瑪莉:N
+          word = {cn: cc.tw2cn(m[1]), en: '_', tag: m[2]}
+        } else if (ri === 1) { // ex: John:N
+          word = {cn: m[1], en: m[1], tag: m[2]}
+        } else { // 1-4 字的中文詞
+          word = kb.get(m[0])
+        }
+        if (word == null && ri === exps.length - 1) { // 單一字元 .
+          word = {cn: m[0], tag: '?'}
+        }
+        if (word != null) {
+          if (word.cn !== ' ') {
+            words.push(word)
+            tokens.push(m[0].trim())
+          }
+          break
+        }
       }
     }
-    i = i + Math.max(1, len)
+    i = i + m[0].length
   }
-  return words
+  return {tokens: tokens, words: words}
 }
 
 function parse (pWords) {
@@ -110,19 +125,28 @@ function parse (pWords) {
   }
 }
 
+function english (word) {
+  if (word.en === '_') {
+    return '_' + pinyinJs(word.cn).toString().replace(',', '_')
+  } else {
+    return word.en
+  }
+}
+
 function mt (words) {
   var eWords = []
   for (var i in words) {
-    eWords.push(c2e(words[i]))
+    eWords.push(english(words[i]))
   }
   return eWords
 }
 
 function analysis (text) {
-  var words = clex(text)
-  console.log('中文：%j', words)
-  parse(words)
-  var eWords = mt(words)
+  var lex = clex(' ' + text)
+  console.log('中文：%j', lex.tokens)
+  console.log('詞彙：%j', lex.words)
+  parse(lex.words)
+  var eWords = mt(lex.words)
   console.log('英文：%j', eWords)
   console.log('=========================')
   return {cn: words, en: eWords}

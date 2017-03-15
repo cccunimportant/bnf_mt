@@ -1,9 +1,9 @@
 var MT = require('../')
 
+MT.analysis('小明 和 小英:N 一起吃蘋果。')
 MT.analysis('小明有5個蘋果，給了小華3個蘋果，請問他還剩幾個蘋果？')
-MT.analysis('小明和小華一起吃蘋果。')
 MT.analysis('黑黑的天，大大的風，爸爸去捕魚，為甚麼 還 不 回 家？')
-MT.analysis('約翰與安妮是 一 對 戀人。')
+MT.analysis('John:N 與 瑪莉:N 是 一 對 戀人。')
 MT.analysis('風與日。風日爭，旅人至，脫者勝，風狂吹，人緊衣，風敗，日暖照，人脫衣，日勝。')
 
 /*
