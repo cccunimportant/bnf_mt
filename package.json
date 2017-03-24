@@ -2,11 +2,18 @@
   "name": "bnf_mt",
   "version": "0.0.2",
   "description": "Human Made Spoken Language with BNF (人造交談語言的檢驗翻譯系統)",
-  "main": "index.js",
+  "main": "BnfMt.js",
   "dependencies": {
+    "chinese-conv": "^1.0.1",
     "chinese_convert": "^1.0.8",
+    "koa": "^2.2.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.0.1",
+    "koa-send": "^3.3.0",
+    "koa-static": "^3.0.0",
     "mdo": "^1.0.4",
-    "pinyin.js": "^2.0.0"
+    "pinyin.js": "^2.0.0",
+    "socket.io": "^1.7.3"
   },
   "devDependencies": {
     "mocha": "^3.1.0"

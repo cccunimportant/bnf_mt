@@ -32,7 +32,7 @@ kb.get = function (w) {
 
 kb.load = function () {
   var kbMdo = fs.readFileSync(path.join(__dirname,  'kb.mdo')).toString()
-  var kbArray = mdo.parseTable(kbMdo, ['count', 'pos'])
+  var kbArray = mdo.parseTable(kbMdo, ['count', 'pos', 'tw'])
   var editMdo = fs.readFileSync(path.join(__dirname , 'kb.edit.mdo')).toString()
   var editArray = mdo.parseTable(editMdo)
   kb.toCn(editArray)

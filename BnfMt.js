@@ -1,6 +1,11 @@
-// S = Q? NP* (VP)* T* .
-// VP = (v* V+ v*)+ NP* | VP+
-// NP = (n* N+) | NP (c NP)*
+// S = Q? NP? VP* T* .+
+// VP = (v* V+ v*)+ NP*
+// NP = (n* N+) (c NP)*
+
+/* 無法正確解析的語句
+
+好n 喝V 的n 蘋果N 牛奶N
+*/
 
 // 小明 有 5 個 蘋果 ， 給 了 小華 3 個 蘋果 ， 請問 他 還 剩 幾 個 蘋果 ？
 // NP   V  n    NP      V  v  NP   n    NP      Q    NP v  V  n     NP
@@ -9,8 +14,8 @@ var pinyinJs = require('pinyin.js')
 var cc = require('chinese_convert')
 var kb = require('./kb')
 
-var wi = 0
-var words = []
+// KoaApp 的錯誤和下列中文全域變數有關。
+var wi, words, errors
 
 function isTag (tag) {
   var word = words[wi]
@@ -18,37 +23,48 @@ function isTag (tag) {
   return (tag === word.tag)
 }
 
-var print = function (s) { process.stderr.write(s) }
+// var print = function (s) { process.stderr.write(s) }
+// var print = function (s) { process.stdout.write(s) }
+var print = function (s) { console.log(s) }
 
 function next (tag) {
   var w = words[wi]
   if (isTag(tag)) {
     print(w.cn + ':' + tag + ' ')
+    errors[wi] = ''
     wi++
     return w
   } else {
     print(w.cn + ':' + tag + '≠' + w.tag + ' ')
-    throw Error('Error !')
+    errors[wi] = w.tag + '≠' + tag
+    throw Error(errors[wi])
   }
 }
 
-// S = Q? NP* (VP)* T* .
+// S = Q? NP? VP* T* .+
 function S () {
-  if (isTag('Q')) {
-    next('Q')
+  try {
+    if (isTag('Q')) {
+      next('Q')
+    }
+    if (isTag('n') || isTag('N')) {
+      NP()
+    }
+    while (isTag('V') || isTag('v')) {
+      VP()
+    }
+    while (isTag('T')) next('T')
+    do { next('.') } while (isTag('.'))
+  } catch (err) {
+    for (; wi < words.length && words[wi].tag !== '.'; wi++) {
+    }
+    for (; wi < words.length && words[wi].tag === '.'; wi++) {
+    }
   }
-  while (isTag('n') || isTag('N')) {
-    NP()
-  }
-  while (isTag('V') || isTag('v')) {
-    VP()
-  }
-  while (isTag('T')) next('T')
-  next('.')
-  console.error('')
+//  console.error('')
 }
 
-// VP = (v* V+ v*)+ NP* | VP+
+// VP = (v* V+ v*)+ NP*
 function VP () {
   do {
     while (isTag('v')) next('v')
@@ -60,10 +76,10 @@ function VP () {
     NP()
   }
 
-  if (isTag('v') || isTag('V')) VP()
+//  if (isTag('v') || isTag('V')) VP()
 }
 
-// NP = (n* N+) | NP (c NP)*
+// NP = (n* N+) (c NP)*
 function NP () {
   while (isTag('n')) next('n')
 
@@ -71,23 +87,24 @@ function NP () {
     next('N')
   } while (isTag('N'))
 
-  if (isTag('c')) {
+  while (isTag('c')) {
     next('c')
     NP()
   }
 }
 
 var exps = [
-  /^\s([\u4E00-\u9FFF]{1,8}):([a-z])\s/i,
-  /^\s(\w{1,20}):([a-z])\s/i,
+  /^\s*([\u4E00-\u9FFF]{1,8}):([a-z])\s+/i,
+  /^\s*(\w{1,20}):([a-z])\s+/i,
   /^[\u4E00-\u9FFF]{4}/,
   /^[\u4E00-\u9FFF]{3}/,
   /^[\u4E00-\u9FFF]{2}/,
   /^./]
 
 function clex (text) {
+  text = text.replace(/\n/g, '↓')
   var m
-  var words = []
+  var lwords = []
   var tokens = []
   for (var i = 0; i < text.length;) {
     for (var ri = 0; ri < exps.length; ri++) {
@@ -105,8 +122,8 @@ function clex (text) {
           word = {cn: m[0], tag: '?'}
         }
         if (word != null) {
-          if (word.cn !== ' ') {
-            words.push(word)
+          if (word.cn !== ' ' && word.cn !== '\n') {
+            lwords.push(word)
             tokens.push(m[0].trim())
           }
           break
@@ -115,14 +132,16 @@ function clex (text) {
     }
     i = i + m[0].length
   }
-  return {tokens: tokens, words: words}
+  return {tokens: tokens, words: lwords}
 }
 
 function parse (pWords) {
   words = pWords
+  errors = []
   for (wi = 0; wi < words.length;) {
     S()
   }
+  return {errors: errors}
 }
 
 function english (word) {
@@ -145,7 +164,8 @@ function analysis (text) {
   var lex = clex(' ' + text)
   console.log('中文：%j', lex.tokens)
   console.log('詞彙：%j', lex.words)
-  parse(lex.words)
+  var p = parse(lex.words)
+  console.log('錯誤：%j', p.errors)
   var eWords = mt(lex.words)
   console.log('英文：%j', eWords)
   console.log('=========================')

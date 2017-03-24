@@ -2,19 +2,7 @@ var rl = require('readline')
 var fs = require('fs')
 var conv = require('chinese-conv')
 // var pinyinJs = require('pinyin.js')
-// var cn2e = require('./cn2e.json')
-var mdo = require('../mdo')
-var cn2eMdo = fs.readFileSync('cn2e.mdo', 'utf8')
-// console.log('cn2eMdo=', cn2eMdo)
-var cn2eList = mdo.parseTable(cn2eMdo)
-for (var i = 0; i < cn2eList.length; i++) {
-  var word = cn2eList[i]
-  word.cn = conv.sify(word.cn)
-}
-// console.log('cn2eList=', cn2eList)
-var cn2e = mdo.index(cn2eList, 'cn')
-// console.log('%s', JSON.stringify(cn2e, null, 2))
-
+var cn2e = require('./cn2e.json')
 var words
 
 var jiebaTagMap = {
@@ -35,7 +23,7 @@ var jiebaTagMap = {
   q: 'n',  // quantifier 量詞
   r: 'N',  // pronoun 代名詞
   s: 'N',  // locational noun 位置名詞 ex:家里, 天下, ...
-  t: 'N',  // temporal noun 時間名詞  ex:當時, 現在, 目前, ... (註 nt 取 n)
+  t: 'N',  // temporal noun 時間名詞  ex:當時, 現在, 目前, ... (註 nt 取 n) 
   v: 'V',  // verb 動詞
   n: 'N',  // jieba POS 裏沒定義，但應該是名詞 ex: 内, 全国, 经济
   a: 'n',  // adjective 形容詞
@@ -74,6 +62,7 @@ function jieba2tag (jbTag) {
   return '#'
 }
 
+
 function jieba2kb (file, posFilter, filterLen) {
   words = []
   var reader = rl.createInterface({
@@ -82,20 +71,16 @@ function jieba2kb (file, posFilter, filterLen) {
   reader.on('line', function (line) {
     var parts = line.split(/\s+/)
     var word = { cn: conv.sify(parts[0]), tw: conv.tify(parts[0]), count: parseInt(parts[1]), pos: parts[2] }
-    if (word.cn === word.tw) word.tw = '='
+    if (word.cn === word.tw) word.tw = '_'
     if ((word.cn.length === filterLen || filterLen === 0)) {
       var m = posFilter.exec(word.pos)
       if (m !== null && m.index === 0) {
-        var e = cn2e[word.cn]
-        if (e == null) e = {en: '?'}
-        word.en = e.en
+        word.en = cn2e[word.cn]
         word.tag = jieba2tag(word.pos)
-/*
-        if (word.cn.length >= 2) {
-          words.push(word)
-        }
-*/
-        if (word.en !== '?') {
+        if (typeof word.en !== 'undefined') {
+          if (!word.en[0].match(/[a-zA-Z]/)) {
+            word.en = '_'
+          }
           words.push(word)
         } else if (word.cn.length === 1) {
           word.en = '?'
@@ -107,20 +92,20 @@ function jieba2kb (file, posFilter, filterLen) {
   })
 
   reader.on('close', function () {
-//    words.sort(function (w1, w2) { return w2.count - w1.count })
-//    for (let word of words) console.log('%s', word.cn)
-
     words.sort(function (w1, w2) {
       var s1 = w1.tag + w1.pos + ('0000000' + w1.count).slice(-7)
       var s2 = w2.tag + w2.pos + ('0000000' + w2.count).slice(-7)
       return s2.localeCompare(s1)
     })
-
-    console.log('tag|cn|tw|en|pos|count\n---|--|--|--|---|-----')
+    for (let word of words) {
+      console.log('%s', word.cn)
+    }
+/*
+    console.log('tag|cn|tw|en|pos|count\n---|--|--|---|-----|--')
     for (let word of words) {
       console.log('%s|%s|%s|%s|%s|%d', word.tag, word.cn, word.tw, word.en, word.pos, word.count)
     }
-
+*/    
   })
 }
 
